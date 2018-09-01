@@ -27,5 +27,3 @@ defmodule PSQUARE do
   end
 
 end
-
-IO.inspect PSQUARE.sum PSQUARE.map [1,3,2,6,4], fn x -> x*x end
