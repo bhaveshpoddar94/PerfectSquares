@@ -15,6 +15,17 @@ defmodule PSQUARE do
     [func.(head) | map(tail, func)]
   end
 
+  @doc """
+  sum function
+  takes a list of integers as input
+  adds the elements of the list
+  returns the sum
+  """
+  def sum([]), do: 0
+  def sum([head | tail]) do 
+    head + sum(tail)
+  end
+
 end
 
 IO.inspect PSQUARE.sum PSQUARE.map [1,3,2,6,4], fn x -> x*x end
