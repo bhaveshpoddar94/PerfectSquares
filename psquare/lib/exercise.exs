@@ -1,4 +1,10 @@
-defmodule Perfectsquare do
+defmodule PerfectSquare do
+  use Task
+
+  def start_link(list) do
+    Task.start_link(__MODULE__, :run, [list])
+  end
+
   def run(list) do
     calculate_sum_of_squares(list) |> is_perfect_square? |> return_first_element(list)
   end
@@ -17,10 +23,22 @@ defmodule Perfectsquare do
 
   defp return_first_element(is_perfect_square, list) do
     if is_perfect_square do
-      Enum.at(list, 0)
-    else 
-      ""
+      IO.puts Enum.at(list, 0)
     end
   end
 end
 
+defmodule Master do
+  use Supervisor
+
+  def start_link(range, k) do
+    Supervisor.start_link(__MODULE__, [range, k])
+  end
+
+  def init([range, k]) do
+    lists = Enum.chunk_every(1..range, k, 1, :discard)
+    create_worker = fn(list) -> worker(PerfectSquare, [list], id: Enum.at(list, 0)) end
+    children = Enum.map(lists, create_worker)
+    supervise(children, strategy: :one_for_one)
+  end
+end
