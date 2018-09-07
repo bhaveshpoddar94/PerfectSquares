@@ -13,8 +13,8 @@ defmodule PSquare.CLI do
     l = length(args)
     case l do
       l when l == 0 -> {:empty, "Enter values for N and K in that order."}
-      l when l < 2 -> {:lt2, "Enter both N and K values in that order."}
-      l when l > 2 -> {:gt2, "Only two integer values of N and K are accepted in that order."}
+      l when l < 2  -> {:lt2, "Enter both N and K values in that order."}
+      l when l > 2  -> {:gt2, "Only two integer values of N and K are accepted in that order."}
       _ -> {:valid, Enum.map(args, &String.to_integer/1)}
     end
   end
