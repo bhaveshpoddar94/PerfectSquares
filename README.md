@@ -12,4 +12,4 @@ Instructions to run:
 2. cd into psquare
 3. On the command line run: mix escript.build
 4. Finally run the project by calling,
-   ./psquare <N> <K>
+   ./psquare N K
