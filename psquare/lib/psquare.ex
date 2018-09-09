@@ -2,16 +2,15 @@ defmodule PSquare.CLI do
   def main(args) do
     case args |> parse_args do
       {:empty, err} -> IO.puts err
-      {:lt2, err} -> IO.puts err
-      {:gt2, err} -> IO.puts err
+      {:lt2, err}   -> IO.puts err
+      {:gt2, err}   -> IO.puts err
       {:valid, [range, k]} -> spawn_tasks(range, k)
     end
   end
 
   defp parse_args(args) do
     {_, args, _} =  OptionParser.parse(args, switches: [name: :string])
-    l = length(args)
-    case l do
+    case length(args) do
       l when l == 0 -> {:empty, "Enter values for N and K in that order."}
       l when l < 2  -> {:lt2, "Enter both N and K values in that order."}
       l when l > 2  -> {:gt2, "Only two integer values of N and K are accepted in that order."}
@@ -23,7 +22,7 @@ defmodule PSquare.CLI do
     work_unit = 8
     Enum.filter(1..range, fn(x) -> (rem x, work_unit) == 1 end)
     |> Enum.map(&create_task(&1, k, work_unit))
-    |> collect_results
+    |> collect_results(range)
   end
 
   defp create_task(start, k, work_unit) do
@@ -38,26 +37,26 @@ defmodule PSquare.CLI do
     input_loop(start+1, k, work_unit-1, s, e)
   end
 
-  defp collect_results([]), do: IO.puts ""
-  defp collect_results(tasks) do
+  defp collect_results([], _range), do: IO.puts ""
+  defp collect_results(tasks, range) do
     receive do
       msg ->
         case Task.find(tasks, msg) do
           {result, task} ->
-            collect_results(List.delete(tasks, task))
-            print_loop result
+            collect_results(List.delete(tasks, task), range)
+            print_loop(result, range)
           nil ->
-            collect_results(tasks)
+            collect_results(tasks, range)
         end
     end
   end
 
-  defp print_loop([]), do: nil
-  defp print_loop([head | tail]) do
-    if head > 0 do
+  defp print_loop([], _range), do: nil
+  defp print_loop([head | tail], range) do
+    if head > 0 && head <= range do
       IO.puts head
     end
-    print_loop(tail)
+    print_loop(tail, range)
   end
 end
 
