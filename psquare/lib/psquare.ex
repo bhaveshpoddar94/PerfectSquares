@@ -20,10 +20,24 @@ defmodule PSquare.CLI do
   end
 
   defp spawn_tasks(range, k) do
-    Enum.map(1..range, &Task.async(fn -> PerfectSquare.run(&1, &1+k-1) end))
+    work_unit = 8
+    Enum.filter(1..range, fn(x) -> (rem x, work_unit) == 1 end)
+    |> Enum.map(&create_task(&1, k, work_unit))
     |> collect_results
   end
-  
+
+  defp create_task(start, k, work_unit) do
+    [s, e] = input_loop(start, k, work_unit, [], [])
+    Task.async(fn -> PerfectSquare.run(s, e)end)
+  end
+
+  defp input_loop(_start, _k, 0, s, e), do: [s, e]
+  defp input_loop(start, k, work_unit, s, e) do
+    s = [start|s]
+    e = [start+k-1|e]
+    input_loop(start+1, k, work_unit-1, s, e)
+  end
+
   defp collect_results([]), do: IO.puts ""
   defp collect_results(tasks) do
     receive do
@@ -31,26 +45,39 @@ defmodule PSquare.CLI do
         case Task.find(tasks, msg) do
           {result, task} ->
             collect_results(List.delete(tasks, task))
-            if result > 0 do
-              IO.puts result
-            end
+            print_loop result
           nil ->
             collect_results(tasks)
         end
     end
   end
+
+  defp print_loop([]), do: nil
+  defp print_loop([head | tail]) do
+    if head > 0 do
+      IO.puts head
+    end
+    print_loop(tail)
+  end
 end
 
 defmodule PerfectSquare do
   def run(s, e) do
-    if calculate_sum_of_squares(s, e) |> is_perfect_square? do
-      s
-    else
-      -1
-    end
+    loop(s, e, [])
   end
 
-  def calculate_sum_of_squares(s, e) do
+  defp loop([], [], result), do: result
+  defp loop([shead | stail], [ehead | etail], result) do
+    result = 
+      if calculate_sum_of_squares(shead, ehead) |> is_perfect_square? do
+        [shead|result]
+      else
+        [-1|result]
+      end
+    loop(stail, etail, result)
+  end
+
+  defp calculate_sum_of_squares(s, e) do
     sum_util(e) - sum_util(s-1)
   end
 
@@ -60,7 +87,7 @@ defmodule PerfectSquare do
     |> :math.pow(2) == n
   end
 
-  def sum_util(n) do
+  defp sum_util(n) do
     numerator = n * (n+1) * (2*n + 1)
     div(numerator, 6)
   end
