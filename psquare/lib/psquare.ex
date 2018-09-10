@@ -19,44 +19,52 @@ defmodule PSquare.CLI do
   end
 
   defp spawn_tasks(range, k) do
-    work_unit = 8
+    work_unit =
+      cond do
+        range < 10 -> range
+        range >= 10000000 -> 100
+        true -> 10
+      end
     Enum.filter(1..range, fn(x) -> (rem x, work_unit) == 1 end)
-    |> Enum.map(&create_task(&1, k, work_unit))
-    |> collect_results(range)
+    |> Enum.map(&create_task(&1, k, work_unit, range))
+    |> collect_results([])
+    |> print_loop
   end
 
-  defp create_task(start, k, work_unit) do
-    [s, e] = input_loop(start, k, work_unit, [], [])
+  defp create_task(start, k, work_unit, range) do
+    [s, e] = input_loop(start, k, work_unit, [], [], range)
     Task.async(fn -> PerfectSquare.run(s, e)end)
   end
 
-  defp input_loop(_start, _k, 0, s, e), do: [s, e]
-  defp input_loop(start, k, work_unit, s, e) do
-    s = [start|s]
-    e = [start+k-1|e]
-    input_loop(start+1, k, work_unit-1, s, e)
+  defp input_loop(_start, _k, 0, s, e, _range), do: [s, e]
+  defp input_loop(start, k, work_unit, s, e, range) do
+    if start > range do
+      [s, e]
+    else
+      s = [start|s]
+      e = [start+k-1|e]
+      input_loop(start+1, k, work_unit-1, s, e, range)
+    end
   end
 
-  defp collect_results([], _range), do: IO.puts ""
-  defp collect_results(tasks, range) do
+  defp collect_results([], res), do: res
+  defp collect_results(tasks, res) do
     receive do
       msg ->
-        case Task.find(tasks, msg) do
-          {result, task} ->
-            collect_results(List.delete(tasks, task), range)
-            print_loop(result, range)
-          nil ->
-            collect_results(tasks, range)
-        end
+          case Task.find(tasks, msg) do
+            {result, task} ->
+              res = res ++ Enum.filter(result, fn x -> x > 0 end)
+              collect_results(List.delete(tasks, task), res)
+            nil ->
+              collect_results(tasks, res)
+          end
     end
   end
 
-  defp print_loop([], _range), do: nil
-  defp print_loop([head | tail], range) do
-    if head > 0 && head <= range do
-      IO.puts head
-    end
-    print_loop(tail, range)
+  defp print_loop([]), do: IO.puts ""
+  defp print_loop([head | tail]) do
+    IO.puts head
+    print_loop(tail)
   end
 end
 
