@@ -87,9 +87,7 @@ defmodule Worker do
   end
 
   defp is_perfect_square?(n) when is_integer(n) do
-    :math.sqrt(n)
-    |> :erlang.trunc()
-    |> :math.pow(2) == n
+    :math.sqrt(n) == :math.sqrt(n) |> round
   end
 
   defp sum_util(n) do
