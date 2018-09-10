@@ -21,7 +21,6 @@ defmodule Master do
     work_unit =
       cond do
         range < 10 -> range
-        range >= 10000000 -> 100
         true -> 10
       end
     Enum.filter(1..range, fn(x) -> (rem x, work_unit) == 1 end)
